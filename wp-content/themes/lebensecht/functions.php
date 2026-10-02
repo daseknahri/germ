@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'LE_VERSION', '1.0.0' );
+define( 'LE_VERSION', '1.1.0' );
 
 function le_asset( $rel ) {
 	return get_stylesheet_directory_uri() . '/assets/' . ltrim( $rel, '/' );
@@ -31,7 +31,7 @@ add_action( 'wp_enqueue_scripts', function () {
 
 /* Preload the reading font so the first paragraph paints in Literata, not a fallback. */
 add_action( 'wp_head', function () {
-	printf( '<link rel="preload" href="%s" as="font" type="font/woff2" crossorigin>' . "\n", esc_url( le_asset( 'fonts/literata.woff2' ) ) );
+	printf( '<link rel="preload" href="%s" as="font" type="font/woff2" crossorigin>' . "\n", esc_url( le_asset( 'fonts/literata-400.woff2' ) ) );
 }, 2 );
 
 /* ---------- Parent feature switches ---------- */
@@ -136,6 +136,9 @@ add_action( 'wp_footer', function () {
 		bar.querySelector('.le-bar__x').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();bar.classList.remove('is-on');try{sessionStorage.setItem('leBarOff','1');}catch(x){}});
 		var tick=false,update=function(){var r=src.getBoundingClientRect(),seen=(innerHeight-r.top)/r.height;var on=seen>.6;bar.classList.toggle('is-on',on);bar.setAttribute('aria-hidden',on?'false':'true');bar.tabIndex=on?0:-1;tick=false;};
 		addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(update);}},{passive:true});
+		/* Google's anchor ad is a fixed bar at the bottom of the screen; lift our bar above it so neither hides the other. */
+		var anchor=function(){var a=document.querySelector('ins.adsbygoogle[data-anchor-status="displayed"],ins.adsbygoogle-noablate[data-anchor-status="displayed"]'),h=0;if(a){var r=a.getBoundingClientRect();if(r.bottom>=innerHeight-2&&r.height<200){h=Math.round(r.height);}}document.documentElement.style.setProperty('--le-anchor',h+'px');};
+		setInterval(anchor,1500);
 	})();
 	</script>
 	<?php

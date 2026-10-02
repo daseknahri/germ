@@ -1,7 +1,8 @@
 /* ===== Fonts (self-hosted, Latin + German subset) ===== */
-@font-face{font-family:"Literata";src:url("__THEME__/assets/fonts/literata.woff2") format("woff2");font-weight:200 900;font-style:normal;font-display:swap}
-@font-face{font-family:"Literata";src:url("__THEME__/assets/fonts/literata-italic.woff2") format("woff2");font-weight:200 900;font-style:italic;font-display:swap}
-@font-face{font-family:"Inter";src:url("__THEME__/assets/fonts/inter.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Literata";src:url("__THEME__/assets/fonts/literata-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Literata";src:url("__THEME__/assets/fonts/literata-600.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Literata";src:url("__THEME__/assets/fonts/literata-700.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Literata";src:url("__THEME__/assets/fonts/literata-italic-400.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap}
 
 /* ===== Brand tokens (the parent theme is fully token-driven) ===== */
 :root{
@@ -12,7 +13,7 @@
   --footer:#221C19; --footer-ink:rgba(255,248,240,.84); --footer-hover:#F2A7B2;
   --hero-bg:#1A1310; --hero-eyebrow:#F2A7B2; --hero-rule:#B3263E; --on-dark:#FFF8F0;
   --serif:"Literata",Georgia,"Times New Roman",serif;
-  --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   --measure:660px;
   /* Mood colours, one per category */
   --mood-rache:#B3263E; --mood-familie:#6D3D8C; --mood-liebe:#C2557A; --mood-herz:#B7791F;
@@ -102,3 +103,41 @@ body{font-family:var(--serif)}
 .le-feed-ad{grid-column:1/-1;min-width:0;margin:.4rem 0}
 .le-feed-ad .wpap-ad{margin:0 auto;max-width:728px}
 .vr-ad-strip{margin-top:.6rem}
+
+/* ===== Mobile-first ads + speed (most readers arrive from Facebook on a phone) ===== */
+/* Reserve each slot's space until the ad arrives, so text never jumps (CLS). Unfilled slots still collapse
+   through the parent theme's :has([data-ad-status="unfilled"]) rule. */
+.vr-ad-strip .adsbygoogle{min-height:100px}
+.entry-content .wpap-ad-incontent .adsbygoogle,.entry-content .wpap-ad-repeat .adsbygoogle{min-height:250px}
+.le-feed-ad .adsbygoogle{min-height:250px}
+
+/* Desktop: lighter. One in-story ad + end grid + sidebar; one in-feed ad per list; slimmer top strip. */
+@media (min-width:900px){
+  .entry-content .wpap-ad-repeat{display:none}
+  .le-feed-ad ~ .le-feed-ad{display:none}
+  .vr-ad-strip .adsbygoogle{min-height:90px;max-height:120px}
+}
+/* Phones: the sidebar (recent stories, topics, its ad) sits under the story — keep its ad, drop the extras. */
+@media (max-width:899px){
+  .sidebar .widget_search,.sidebar .search-form{display:none}
+}
+
+/* Phone reading comfort */
+@media (max-width:600px){
+  .vr-container{width:calc(100vw - 28px)}
+  .entry-title{font-size:1.75rem;line-height:1.18}
+  .entry-content{font-size:1.125rem;line-height:1.75}
+  .entry-content > p:first-of-type::first-letter{font-size:3.1em}
+  .entry-excerpt{font-size:1.02rem}
+  .entry-featured-media img{border-radius:12px}
+  .le-end{padding:1.2rem 1rem;margin-top:1.8rem}
+  .le-end__actions{flex-direction:column}
+  .le-btn{justify-content:center;width:100%;padding:.9rem 1rem;font-size:1.02rem}
+  .le-next{grid-template-columns:88px 1fr;gap:.8rem;padding:.8rem}
+  .le-next img{width:88px;height:88px}
+  .le-next__title{font-size:1.05rem}
+  .post-card__title{font-size:1.1rem}
+}
+
+/* The next-story bar rides above Google's bottom anchor ad (JS sets --le-anchor to the anchor's height). */
+.le-bar{bottom:calc(12px + var(--le-anchor,0px))}

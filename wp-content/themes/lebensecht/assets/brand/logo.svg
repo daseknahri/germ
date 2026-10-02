@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 462 112" width="462" height="112">
+  <g transform="translate(4,4) scale(0.203)">
+    <rect width="512" height="512" rx="112" fill="#B3263E"/>
+    <path d="M256 430 C150 362 92 300 92 214 C92 150 140 104 200 104 C232 104 258 120 256 152 C254 120 280 104 312 104 C372 104 420 150 420 214 C420 300 362 362 256 430 Z" fill="#FFF8F0"/>
+    <text x="256" y="318" text-anchor="middle" font-family="Literata" font-weight="700" font-size="230" fill="#B3263E">„“</text>
+  </g>
+  <text x="126" y="74" font-family="Literata" font-weight="600" font-size="62" fill="#221C19" letter-spacing="-1">Lebens<tspan font-style="italic" fill="#B3263E">echt</tspan></text>
+</svg>

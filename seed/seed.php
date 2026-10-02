@@ -147,6 +147,26 @@ function le_apply_ads() {
 	$ads['enabled']   = 1;
 	$ads['scope_all'] = 1;
 	$ads['auto_code'] = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' . $client . '" crossorigin="anonymous"></script>';
+
+	/* Manual placements in every story (Auto ads keeps the overlay formats: anchor + vignette).
+	   Stories are ~9 paragraphs → ads after paragraphs 2, 5 and 8, plus a multiplex grid at the end.
+	   Units: "LE - in story" (in-article) and "LE - end of story (multiplex)". ADS_MANUAL=off disables. */
+	if ( 'off' !== trim( (string) getenv( 'ADS_MANUAL' ) ) ) {
+		$push      = '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>';
+		$in_story  = '<ins class="adsbygoogle" style="display:block;text-align:center" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="' . $client . '" data-ad-slot="5976014231"></ins>' . $push;
+		$multiplex = '<ins class="adsbygoogle" style="display:block" data-ad-format="autorelaxed" data-ad-client="' . $client . '" data-ad-slot="6921515967"></ins>' . $push;
+		$ads['slots'] = array(
+			'top'       => array( 'on' => 0, 'code' => '' ),
+			'incontent' => array( 'on' => 1, 'code' => $in_story, 'after' => 2 ),
+			'repeat'    => array( 'on' => 1, 'code' => $in_story, 'every' => 3, 'max' => 2 ),
+			'bottom'    => array( 'on' => 1, 'code' => $multiplex ),
+		);
+		$ads['min_gap'] = 2;
+		$ads['max_ads'] = 4;
+		$ads['label']   = 0;   /* the theme already prints the translated "Anzeige" label above each slot */
+	} else {
+		$ads['slots'] = array();
+	}
 	update_option( 'wpap_ads_inject', $ads );
 	update_option( 'wpap_ads_txt', 'google.com, ' . str_replace( 'ca-', '', $client ) . ', DIRECT, f08c47fec0942fa0' );
 }

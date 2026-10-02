@@ -124,17 +124,6 @@ function le_seed_site() {
 	foreach ( array_keys( get_registered_nav_menus() ) as $loc ) { if ( false !== strpos( $loc, 'primary' ) || 'menu-1' === $loc ) { $locs[ $loc ] = $mid; } }
 	set_theme_mod( 'nav_menu_locations', $locs );
 
-	/* Ads: AdSense Auto ads through the plugin (client id from the ADSENSE_CLIENT env var). */
-	$client = trim( (string) getenv( 'ADSENSE_CLIENT' ) );
-	if ( preg_match( '/^ca-pub-\d{10,20}$/', $client ) ) {
-		$ads = (array) get_option( 'wpap_ads_inject', array() );
-		$ads['enabled']   = 1;
-		$ads['scope_all'] = 1;
-		$ads['auto_code'] = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' . $client . '" crossorigin="anonymous"></script>';
-		update_option( 'wpap_ads_inject', $ads );
-		update_option( 'wpap_ads_txt', 'google.com, ' . str_replace( 'ca-', '', $client ) . ', DIRECT, f08c47fec0942fa0' );
-	}
-
 	/* Drop WordPress's default sidebar widgets (English 'Recent Posts', Archives, Meta…); the theme renders its own
 	   'Recent stories' + topics blocks when the sidebar is empty. */
 	$sw = (array) get_option( 'sidebars_widgets', array() );
@@ -144,6 +133,22 @@ function le_seed_site() {
 	flush_rewrite_rules( false );
 	update_option( 'le_seed_version', LE_SEED_VERSION );
 	le_log( 'site seeded' );
+}
+
+/* AdSense Auto ads through the plugin. Applied on every start so a changed ADSENSE_CLIENT takes effect on the next
+   redeploy; falls back to the site's publisher id when the variable arrives empty (Coolify passes declared-but-unset
+   variables through as empty strings). */
+const LE_ADSENSE_DEFAULT = 'ca-pub-6869205417923902';
+function le_apply_ads() {
+	$client = trim( (string) getenv( 'ADSENSE_CLIENT' ) );
+	if ( '' === $client ) { $client = LE_ADSENSE_DEFAULT; }
+	if ( 'off' === $client || ! preg_match( '/^ca-pub-\d{10,20}$/', $client ) ) { return; }
+	$ads = (array) get_option( 'wpap_ads_inject', array() );
+	$ads['enabled']   = 1;
+	$ads['scope_all'] = 1;
+	$ads['auto_code'] = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' . $client . '" crossorigin="anonymous"></script>';
+	update_option( 'wpap_ads_inject', $ads );
+	update_option( 'wpap_ads_txt', 'google.com, ' . str_replace( 'ca-', '', $client ) . ', DIRECT, f08c47fec0942fa0' );
 }
 
 /* The reader question for the end-of-story box: the last line of the Facebook comment that ends in "?". */
@@ -197,4 +202,5 @@ function le_import_bundles() {
 }
 
 if ( (int) get_option( 'le_seed_version', 0 ) < LE_SEED_VERSION ) { le_seed_site(); }
+le_apply_ads();
 le_import_bundles();

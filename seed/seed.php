@@ -158,7 +158,7 @@ function le_apply_ads() {
 	if ( 'off' !== trim( (string) getenv( 'ADS_MANUAL' ) ) ) {
 		$push      = '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>';
 		$in_story  = '<ins class="adsbygoogle" style="display:block;text-align:center" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="' . $client . '" data-ad-slot="5976014231"></ins>' . $push;
-		$multiplex = '<ins class="adsbygoogle" style="display:block" data-ad-format="autorelaxed" data-ad-client="' . $client . '" data-ad-slot="6921515967"></ins>' . $push;
+		$multiplex = '<ins class="adsbygoogle" style="display:block" data-ad-format="autorelaxed" data-matched-content-ui-type="image_stacked,image_stacked" data-matched-content-rows-num="3,2" data-matched-content-columns-num="2,4" data-ad-client="' . $client . '" data-ad-slot="6921515967"></ins>' . $push;
 		$ads['slots'] = array(
 			'top'       => array( 'on' => 0, 'code' => '' ),
 			'incontent' => array( 'on' => 1, 'code' => $in_story, 'after' => 2 ),

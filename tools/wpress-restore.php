@@ -27,9 +27,12 @@ $files = 0;
 while ( ! feof( $in ) ) {
 	$h = fread( $in, HEADER );
 	if ( strlen( $h ) < HEADER || trim( $h, "\0" ) === '' ) { break; }   /* end-of-archive block */
-	$name = rtrim( substr( $h, 0, 255 ), "\0" );
-	$size = (int) rtrim( substr( $h, 255, 14 ), "\0" );
-	$path = rtrim( substr( $h, 281, 4096 ), "\0" );
+	/* Fields are NUL-padded C strings; anything after the first NUL is padding/garbage. */
+	$field = function ( $off, $len ) use ( $h ) { $v = substr( $h, $off, $len ); $p = strpos( $v, "\0" ); return false === $p ? $v : substr( $v, 0, $p ); };
+	$name = $field( 0, 255 );
+	$size = (int) $field( 255, 14 );
+	$path = str_replace( '\\', '/', $field( 281, 4096 ) );
+	if ( '' === $name ) { break; }
 	$rel  = ( '.' === $path || '' === $path ) ? $name : $path . '/' . $name;
 	if ( false !== strpos( $rel, '..' ) ) { fwrite( STDERR, "skip unsafe path $rel\n" ); fseek( $in, $size, SEEK_CUR ); continue; }
 

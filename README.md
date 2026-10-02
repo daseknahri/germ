@@ -22,4 +22,4 @@ Docker Compose build pack, domain on the `wordpress` service. Env vars:
 Admin login: user `redaktion`, password = Coolify's `SERVICE_PASSWORD_WPADMIN`.
 
 ## Before monetising
-Fill in and publish the **Impressum** page (created as a draft — German law requires the operator's name + address).
+Impressum is published from seed.php (operator: Dasek Nahri, Tanger). Change details there + bump LE_SEED_VERSION.

@@ -8,7 +8,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-const LE_SEED_VERSION = 1;
+const LE_SEED_VERSION = 2;
 const LE_DATA         = '/opt/site/data';
 const LE_BRAND_DIR    = WP_CONTENT_DIR . '/themes/lebensecht/assets/brand';
 
@@ -102,12 +102,16 @@ function le_seed_site() {
 		. '<h2>5. Teilen-Schaltflächen</h2><p>Die Schaltflächen „Auf Facebook teilen“ und „Per WhatsApp senden“ sind einfache Links. Daten werden erst übertragen, wenn du sie anklickst.</p>'
 		. '<h2>6. Deine Rechte</h2><p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch sowie das Recht auf Beschwerde bei einer Datenschutz-Aufsichtsbehörde.</p>' );
 	update_option( 'wp_page_for_privacy_policy', $privacy );
-	/* The Impressum needs the owner's legal name + address (German law) — kept as a DRAFT until filled in. */
-	if ( ! get_page_by_path( 'impressum' ) ) {
-		le_page( 'impressum', 'Impressum',
-			'<p><strong>Angaben gemäß § 5 DDG</strong></p><p>[Vorname Nachname]<br>[Straße Hausnummer]<br>[PLZ Ort]<br>[Land]</p><p><strong>Kontakt</strong><br>E-Mail: [E-Mail-Adresse]</p><p><strong>Verantwortlich für den Inhalt</strong><br>[Vorname Nachname, Anschrift wie oben]</p>',
-			'draft' );
-	}
+	/* Impressum (§ 5 DDG / § 18 MStV) — operator details supplied by the owner on 2026-10-02. */
+	le_page( 'impressum', 'Impressum',
+		'<h2>Angaben gemäß § 5 DDG</h2>'
+		. '<p>Dasek Nahri<br>Boukhalef<br>90090 Tanger<br>Marokko</p>'
+		. '<h2>Kontakt</h2><p>E-Mail: <a href="mailto:daseknahri@gmail.com">daseknahri@gmail.com</a></p>'
+		. '<h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2><p>Dasek Nahri, Anschrift wie oben</p>'
+		. '<h2>Hinweis zu den Geschichten</h2><p>Die Geschichten auf dieser Website werden redaktionell bearbeitet. Namen, Orte und Details sind verändert oder frei gestaltet; Ähnlichkeiten mit realen Personen sind zufällig.</p>'
+		. '<h2>Haftung für Links</h2><p>Unsere Seiten können Links zu externen Websites enthalten, auf deren Inhalte wir keinen Einfluss haben. Für diese Inhalte ist stets der jeweilige Anbieter verantwortlich.</p>'
+		. '<h2>Verbraucherstreitbeilegung</h2><p>Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>',
+		'publish' );
 	le_page( 'hinweis', 'Hinweis zu unseren Geschichten',
 		'<p>Die Geschichten auf Lebensecht sind von Erlebnissen aus dem Alltag inspiriert und werden redaktionell bearbeitet. Namen, Orte und Details sind verändert oder frei gestaltet. Ähnlichkeiten mit realen Personen oder Ereignissen sind zufällig.</p>' );
 

@@ -160,3 +160,27 @@ add_action( 'wp_head', function () {
 	echo '<meta name="twitter:card" content="summary_large_image">' . "\n";
 	if ( is_front_page() || is_category() ) { echo '<meta name="description" content="' . esc_attr( $desc ) . '">' . "\n"; }
 }, 5 );
+
+/* ---------- In-feed ads: one after every 4 story cards on home, category, tag, author and search lists ----------
+   Hooked on the_post, which fires right before each card renders, so the ad lands between cards inside the
+   grid (styled to span the full row). Uses the "LE - in feed / sidebar" unit; ADS_MANUAL=off disables. */
+define( 'LE_FEED_EVERY', 4 );
+define( 'LE_FEED_MAX', 3 );
+
+add_action( 'the_post', function ( $post, $query ) {
+	static $counts = array();
+	if ( is_admin() || is_singular() || 'off' === trim( (string) getenv( 'ADS_MANUAL' ) ) ) { return; }
+	if ( ! ( is_home() || is_front_page() || is_archive() || is_search() ) ) { return; }
+	if ( 'post' !== $post->post_type ) { return; }
+	$key = spl_object_hash( $query );
+	$counts[ $key ] = isset( $counts[ $key ] ) ? $counts[ $key ] + 1 : 1;
+	$n = $counts[ $key ];
+	/* $n is the card about to render; insert before cards 5, 9, 13 (after every 4th). */
+	if ( $n <= 1 || 0 !== ( $n - 1 ) % LE_FEED_EVERY || ( $n - 1 ) / LE_FEED_EVERY > LE_FEED_MAX ) { return; }
+	$ads = function_exists( 'wpap_get_ads' ) ? wpap_get_ads() : array();
+	if ( empty( $ads['enabled'] ) ) { return; }
+	$client = '';
+	if ( preg_match( '/client=(ca-pub-\d+)/', (string) ( $ads['auto_code'] ?? '' ), $m ) ) { $client = $m[1]; }
+	if ( '' === $client ) { return; }
+	echo '<div class="le-feed-ad"><div class="wpap-ad wpap-ad-feed"><ins class="adsbygoogle" style="display:block" data-ad-client="' . esc_attr( $client ) . '" data-ad-slot="6714380837" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div></div>';
+}, 10, 2 );

@@ -161,11 +161,22 @@ function le_apply_ads() {
 			'repeat'    => array( 'on' => 1, 'code' => $in_story, 'every' => 3, 'max' => 2 ),
 			'bottom'    => array( 'on' => 1, 'code' => $multiplex ),
 		);
+		/* Page zones: an ad right under the header on EVERY page (first thing a Facebook visitor sees — the
+		   child theme also enables it on the home page) and one in the desktop sidebar. */
+		$display = function ( $slot ) use ( $client ) {
+			return '<ins class="adsbygoogle" style="display:block" data-ad-client="' . $client . '" data-ad-slot="' . $slot . '" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>';
+		};
+		$ads['zones'] = array(
+			'header'  => array( 'on' => 1, 'code' => $display( '6634489785' ) ),   /* LE - top (under header) */
+			'sidebar' => array( 'on' => 1, 'code' => $display( '6714380837' ) ),   /* LE - in feed / sidebar */
+			'footer'  => array( 'on' => 0, 'code' => '' ),
+		);
 		$ads['min_gap'] = 2;
 		$ads['max_ads'] = 4;
 		$ads['label']   = 0;   /* the theme already prints the translated "Anzeige" label above each slot */
 	} else {
 		$ads['slots'] = array();
+		$ads['zones'] = array();
 	}
 	update_option( 'wpap_ads_inject', $ads );
 	update_option( 'wpap_ads_txt', 'google.com, ' . str_replace( 'ca-', '', $client ) . ', DIRECT, f08c47fec0942fa0' );

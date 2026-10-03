@@ -32,5 +32,8 @@ fi
 
 $WP theme activate lebensecht
 $WP plugin activate automation-hamri
+# Google Site Kit (Analytics + AdSense reports in wp-admin). Installed once from wordpress.org, then kept on the volume.
+$WP plugin is-installed google-site-kit || $WP plugin install google-site-kit || log "site kit download failed (retried next start)"
+$WP plugin is-installed google-site-kit && $WP plugin activate google-site-kit
 $WP eval-file /opt/site/seed/seed.php && log "seed done"
 chown -R www-data:www-data /var/www/html/wp-content/uploads 2>/dev/null || true

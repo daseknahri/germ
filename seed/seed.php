@@ -8,7 +8,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-const LE_SEED_VERSION = 2;
+const LE_SEED_VERSION = 3;
 const LE_DATA         = '/opt/site/data';
 const LE_BRAND_DIR    = WP_CONTENT_DIR . '/themes/lebensecht/assets/brand';
 
@@ -99,8 +99,9 @@ function le_seed_site() {
 		. '<h2>2. Hosting und Server-Logfiles</h2><p>Beim Aufruf dieser Website werden technisch notwendige Daten (z. B. IP-Adresse, Datum und Uhrzeit, aufgerufene Seite, Browser) in Server-Logfiles verarbeitet, um den sicheren Betrieb zu gewährleisten (Art. 6 Abs. 1 lit. f DSGVO).</p>'
 		. '<h2>3. Schriftarten</h2><p>Die verwendeten Schriftarten werden lokal von unserem Server geladen. Es findet keine Verbindung zu Servern von Google Fonts statt.</p>'
 		. '<h2>4. Werbung (Google AdSense) und Einwilligung</h2><p>Diese Website finanziert sich über Werbung von Google AdSense (Google Ireland Ltd., Gordon House, Barrow Street, Dublin 4, Irland). Google kann Cookies und ähnliche Technologien einsetzen, um Anzeigen auszuliefern und zu messen. Personalisierte Werbung erfolgt nur mit deiner Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die du über das Einwilligungsbanner erteilen, ablehnen und jederzeit widerrufen kannst. Weitere Informationen: <a href="https://policies.google.com/technologies/ads" rel="nofollow noopener">policies.google.com/technologies/ads</a>.</p>'
-		. '<h2>5. Teilen-Schaltflächen</h2><p>Die Schaltflächen „Auf Facebook teilen“ und „Per WhatsApp senden“ sind einfache Links. Daten werden erst übertragen, wenn du sie anklickst.</p>'
-		. '<h2>6. Deine Rechte</h2><p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch sowie das Recht auf Beschwerde bei einer Datenschutz-Aufsichtsbehörde.</p>' );
+		. '<h2>5. Besucherstatistik (Histats)</h2><p>Zur anonymen Reichweitenmessung nutzen wir Histats (histats.com). Dabei werden beim Seitenaufruf technische Daten wie IP-Adresse, Browser, Gerät, Referrer und aufgerufene Seite an Histats übertragen und zu Statistiken zusammengefasst. Rechtsgrundlage ist unser berechtigtes Interesse an der Auswertung der Nutzung (Art. 6 Abs. 1 lit. f DSGVO), soweit Cookies gesetzt werden, deine Einwilligung (§ 25 TDDDG). Weitere Informationen: <a href="https://www.histats.com/?act=1001" rel="nofollow noopener">Datenschutzhinweise von Histats</a>.</p>'
+		. '<h2>6. Teilen-Schaltflächen</h2><p>Die Schaltflächen „Auf Facebook teilen“ und „Per WhatsApp senden“ sind einfache Links. Daten werden erst übertragen, wenn du sie anklickst.</p>'
+		. '<h2>7. Deine Rechte</h2><p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch sowie das Recht auf Beschwerde bei einer Datenschutz-Aufsichtsbehörde.</p>' );
 	update_option( 'wp_page_for_privacy_policy', $privacy );
 	/* Impressum (§ 5 DDG / § 18 MStV) — operator details supplied by the owner on 2026-10-02. */
 	le_page( 'impressum', 'Impressum',

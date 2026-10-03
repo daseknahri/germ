@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'LE_VERSION', '1.1.0' );
+define( 'LE_VERSION', '1.2.0' );
 
 function le_asset( $rel ) {
 	return get_stylesheet_directory_uri() . '/assets/' . ltrim( $rel, '/' );
@@ -187,3 +187,15 @@ add_action( 'the_post', function ( $post, $query ) {
 	if ( '' === $client ) { return; }
 	echo '<div class="le-feed-ad"><div class="wpap-ad wpap-ad-feed"><ins class="adsbygoogle" style="display:block" data-ad-client="' . esc_attr( $client ) . '" data-ad-slot="6714380837" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div></div>';
 }, 10, 2 );
+
+/* ---------- Visitor statistics (Histats, account 5047672) ----------
+   Async counter in the footer, front end only; logged-in editors are skipped so the owner's own visits don't
+   count. HISTATS_ID=off (env) disables it. Disclosed in the Datenschutz page (section 5). */
+add_action( 'wp_footer', function () {
+	$id = trim( (string) getenv( 'HISTATS_ID' ) );
+	if ( 'off' === $id || is_admin() || is_user_logged_in() ) { return; }
+	$id = ctype_digit( $id ) ? $id : '5047672';
+	echo "<script>var _Hasync=_Hasync||[];_Hasync.push(['Histats.start','1," . esc_js( $id ) . ",4,0,0,0,00010000']);_Hasync.push(['Histats.fasi','1']);_Hasync.push(['Histats.track_hits','']);(function(){var hs=document.createElement('script');hs.async=true;hs.src='//s10.histats.com/js15_as.js';(document.head||document.body).appendChild(hs);})();</script>"
+		. '<noscript><img src="//sstatic1.histats.com/0.gif?' . esc_attr( $id ) . '&amp;101" alt="" width="1" height="1" style="position:absolute;left:-9999px"></noscript>' . "
+";
+}, 50 );

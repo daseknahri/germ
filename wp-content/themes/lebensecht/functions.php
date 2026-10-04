@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'LE_VERSION', '1.2.0' );
+define( 'LE_VERSION', '1.3.0' );
 
 function le_asset( $rel ) {
 	return get_stylesheet_directory_uri() . '/assets/' . ltrim( $rel, '/' );
@@ -38,7 +38,15 @@ add_action( 'wp_head', function () {
 add_filter( 'vr_enable_share_at_end', '__return_false' );     /* replaced by the richer end block below */
 add_filter( 'vr_enable_jump_to_section', '__return_false' );  /* stories have no sections */
 add_filter( 'vr_enable_pinterest_save', '__return_false' );   /* Facebook audience */
-add_filter( 'vr_hero_image_url', function () { return le_asset( 'brand/hero.jpg' ); } );
+add_filter( 'vr_hero_image_url', function () { return le_asset( 'brand/hero-1280.webp' ); } );   /* 43 KB, was a 168 KB 1600px JPEG */
+
+/* The parent preloads the newest story's cover as the home LCP image, but this child's home hero is the brand
+   photo above, so that preload fetched a second, unused image on a slow phone connection. Preload the real hero. */
+add_action( 'wp_head', function () {
+	if ( ! is_front_page() || is_paged() ) { return; }
+	remove_action( 'wp_head', 'vr_preload_lcp', 1 );
+	printf( '<link rel="preload" as="image" href="%s" type="image/webp" fetchpriority="high">' . "\n", esc_url( le_asset( 'brand/hero-1280.webp' ) ) );
+}, 0 );
 add_filter( 'vr_site_icon_svg_url', function () { return le_asset( 'brand/mark.svg' ); } );
 
 /* Category tiles on the home page use the newest story image of that category. */
@@ -164,6 +172,51 @@ add_action( 'wp_head', function () {
 	if ( is_front_page() || is_category() ) { echo '<meta name="description" content="' . esc_attr( $desc ) . '">' . "\n"; }
 }, 5 );
 
+/* ---------- Ads: fixed sizes, no layout jumps ----------
+   Responsive "auto" units resize themselves after the page paints (a phone got a 375 px square, then collapsed
+   again when no ad was served), which shoved the whole page down and back up. Fixed sizes (AdSense's documented
+   way to modify responsive code) let us reserve the exact space up front: 300x250 on phones, a slim 728x90 on
+   desktop. Phone-or-not is decided on the server, so a desktop visitor never loads the big format. */
+function le_ad_client() {
+	$ads = function_exists( 'wpap_get_ads' ) ? wpap_get_ads() : array();
+	if ( empty( $ads['enabled'] ) || 'off' === trim( (string) getenv( 'ADS_MANUAL' ) ) ) { return ''; }
+	return preg_match( '/client=(ca-pub-\d+)/', (string) ( $ads['auto_code'] ?? '' ), $m ) ? $m[1] : '';
+}
+
+function le_ad_ins( $client, $slot ) {
+	$size = wp_is_mobile() ? array( 300, 250 ) : array( 728, 90 );
+	return '<ins class="adsbygoogle" style="display:inline-block;width:' . $size[0] . 'px;height:' . $size[1] . 'px" data-ad-client="' . esc_attr( $client ) . '" data-ad-slot="' . esc_attr( $slot ) . '"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>';
+}
+
+/* Phone and desktop get different ad sizes from the same URL: tell any cache in between. */
+add_action( 'send_headers', function () { header( 'Vary: User-Agent', false ); } );
+
+/* The ad right under the header, the first thing a Facebook visitor sees. The strip has a fixed height; if Google
+   has no ad for a view, a "most read" card of exactly the same size takes its place (pure CSS, see lebensecht.css),
+   so nothing moves and the space still earns a click through to another story. */
+function le_top_ad() {
+	$client = le_ad_client();
+	if ( '' === $client ) { return; }
+	$fb = null;
+	if ( is_singular( 'post' ) ) { $fb = le_next_story( get_queried_object_id() ); }
+	if ( ! $fb ) {
+		$latest = get_posts( array( 'numberposts' => 1, 'ignore_sticky_posts' => true, 'post__not_in' => is_singular() ? array( get_queried_object_id() ) : array() ) );
+		$fb     = $latest ? $latest[0] : null;
+	}
+	echo '<div class="vr-ad-strip le-top ' . ( wp_is_mobile() ? 'le-top--m' : 'le-top--d' ) . '"><div class="vr-ad-strip__inner">';
+	echo '<div class="wpap-ad wpap-ad-zone-header">' . le_ad_ins( $client, '6634489785' ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in le_ad_ins()
+	if ( $fb ) {
+		echo '<a class="le-top-fb" href="' . esc_url( get_permalink( $fb ) ) . '"><span>Meistgelesen</span><strong>' . esc_html( get_the_title( $fb ) ) . '</strong><em>Jetzt lesen &rarr;</em></a>';
+	}
+	echo '</div></div>';
+}
+
+/* Site Kit's AdSense snippet loads the very same adsbygoogle.js a second time (plus a ca-host-pub param): twice the
+   JavaScript on a phone. The plugin already prints the one tag this site needs. */
+add_filter( 'googlesitekit_adsense_tag_blocked', function ( $blocked ) {
+	return '' !== le_ad_client() ? true : $blocked;
+} );
+
 /* ---------- In-feed ads: one after every 4 story cards on home, category, tag, author and search lists ----------
    Hooked on the_post, which fires right before each card renders, so the ad lands between cards inside the
    grid (styled to span the full row). Uses the "LE - in feed / sidebar" unit; ADS_MANUAL=off disables. */
@@ -179,22 +232,21 @@ add_action( 'the_post', function ( $post, $query ) {
 	$counts[ $key ] = isset( $counts[ $key ] ) ? $counts[ $key ] + 1 : 1;
 	$n = $counts[ $key ];
 	/* $n is the card about to render; insert before cards 5, 9, 13 (after every 4th). */
-	if ( $n <= 1 || 0 !== ( $n - 1 ) % LE_FEED_EVERY || ( $n - 1 ) / LE_FEED_EVERY > LE_FEED_MAX ) { return; }
-	$ads = function_exists( 'wpap_get_ads' ) ? wpap_get_ads() : array();
-	if ( empty( $ads['enabled'] ) ) { return; }
-	$client = '';
-	if ( preg_match( '/client=(ca-pub-\d+)/', (string) ( $ads['auto_code'] ?? '' ), $m ) ) { $client = $m[1]; }
+	$max = wp_is_mobile() ? LE_FEED_MAX : 1;   /* desktop: one in-feed ad (lighter); never render ads CSS would hide */
+	if ( $n <= 1 || 0 !== ( $n - 1 ) % LE_FEED_EVERY || ( $n - 1 ) / LE_FEED_EVERY > $max ) { return; }
+	$client = le_ad_client();
 	if ( '' === $client ) { return; }
-	echo '<div class="le-feed-ad"><div class="wpap-ad wpap-ad-feed"><ins class="adsbygoogle" style="display:block" data-ad-client="' . esc_attr( $client ) . '" data-ad-slot="6714380837" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div></div>';
+	echo '<div class="le-feed-ad"><div class="wpap-ad wpap-ad-feed">' . le_ad_ins( $client, '6714380837' ) . '</div></div>'; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in le_ad_ins()
 }, 10, 2 );
 
 /* ---------- Visitor statistics (Histats, account 5055954) ----------
-   Async counter in the footer, front end only; logged-in editors are skipped so the owner's own visits don't
-   count. HISTATS_ID=off (env) disables it. Disclosed in the Datenschutz page (section 5). */
+   Counter in the footer, loaded 1.2 s after the page has finished so it never competes with the story. Front end
+   only; logged-in editors are skipped so the owner's own visits don't count. HISTATS_ID=off (env) disables it.
+   Disclosed in the Datenschutz page (section 5). */
 add_action( 'wp_footer', function () {
 	$id = trim( (string) getenv( 'HISTATS_ID' ) );
 	if ( 'off' === $id || is_admin() || is_user_logged_in() ) { return; }
 	$id = ctype_digit( $id ) ? $id : '5055954';
-	echo "<script>var _Hasync=_Hasync||[];_Hasync.push(['Histats.start','1," . esc_js( $id ) . ",4,0,0,0,00010000']);_Hasync.push(['Histats.fasi','1']);_Hasync.push(['Histats.track_hits','']);(function(){var hs=document.createElement('script');hs.async=true;hs.src='//s10.histats.com/js15_as.js';(document.head||document.body).appendChild(hs);})();</script>"
+	echo "<script>var _Hasync=_Hasync||[];_Hasync.push(['Histats.start','1," . esc_js( $id ) . ",4,0,0,0,00010000']);_Hasync.push(['Histats.fasi','1']);_Hasync.push(['Histats.track_hits','']);addEventListener('load',function(){setTimeout(function(){var hs=document.createElement('script');hs.async=true;hs.src='//s10.histats.com/js15_as.js';(document.head||document.body).appendChild(hs);},1200);});</script>"
 		. '<noscript><img src="//sstatic1.histats.com/0.gif?' . esc_attr( $id ) . '&amp;101" alt="" width="1" height="1" style="position:absolute;left:-9999px"></noscript>' . "\n";
 }, 50 );

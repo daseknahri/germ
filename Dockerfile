@@ -7,6 +7,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends unzip less mari
  && chmod +x /usr/local/bin/wp \
  && { echo 'upload_max_filesize=64M'; echo 'post_max_size=64M'; echo 'memory_limit=512M'; echo 'max_execution_time=300'; } > /usr/local/etc/php/conf.d/site.ini
 
+# Browser caching for static files (fonts a year; images, CSS and JS a month, JS/CSS URLs carry ?ver=): a repeat
+# visitor from Facebook downloads nothing but the page itself.
+COPY docker/le-cache.conf /etc/apache2/conf-available/le-cache.conf
+RUN a2enmod expires headers deflate && a2enconf le-cache
+
 # Vendored theme + plugin + story bundles. They are copied into the live wp-content on every start,
 # so a redeploy always ships the repo's versions (the wp-content volume keeps uploads + DB-managed state).
 COPY wp-content/ /opt/site/wp-content/

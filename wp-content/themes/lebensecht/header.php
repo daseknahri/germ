@@ -62,6 +62,6 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 	</div>
 </header>
 
-<?php /* Lebensecht: the header ad also shows on the home page — Facebook visitors see an ad first everywhere. */ if ( ! is_404() && ! ( is_search() && ! have_posts() ) ) { vr_ad_strip( 'header', 'header-ad' ); } ?>
+<?php /* Lebensecht: the header ad also shows on the home page — Facebook visitors see an ad first everywhere. */ if ( ! is_404() && ! ( is_search() && ! have_posts() ) ) { le_top_ad(); } ?>
 
 <main id="content" class="site-main" tabindex="-1">

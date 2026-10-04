@@ -168,12 +168,12 @@ function le_apply_ads() {
 		);
 		/* Page zones: an ad right under the header on EVERY page (first thing a Facebook visitor sees — the
 		   child theme also enables it on the home page) and one in the desktop sidebar. */
-		$display = function ( $slot ) use ( $client ) {
-			return '<ins class="adsbygoogle" style="display:block" data-ad-client="' . $client . '" data-ad-slot="' . $slot . '" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>';
-		};
+		/* Fixed 300x250 (no layout jump). The header ad is printed by the child theme (le_top_ad: 300x250 on phones,
+		   728x90 on desktop, with a same-size fallback card), so the plugin's header zone stays off. */
+		$sidebar = '<ins class="adsbygoogle" style="display:inline-block;width:300px;height:250px" data-ad-client="' . $client . '" data-ad-slot="6714380837"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>';
 		$ads['zones'] = array(
-			'header'  => array( 'on' => 1, 'code' => $display( '6634489785' ) ),   /* LE - top (under header) */
-			'sidebar' => array( 'on' => 1, 'code' => $display( '6714380837' ) ),   /* LE - in feed / sidebar */
+			'header'  => array( 'on' => 0, 'code' => '' ),
+			'sidebar' => array( 'on' => 1, 'code' => $sidebar ),   /* LE - in feed / sidebar */
 			'footer'  => array( 'on' => 0, 'code' => '' ),
 		);
 		$ads['min_gap'] = 2;

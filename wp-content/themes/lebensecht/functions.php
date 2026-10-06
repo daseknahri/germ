@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'LE_VERSION', '2.0.3' );
+define( 'LE_VERSION', '2.0.4' );
 define( 'LE_FB_PAGE', 'https://www.facebook.com/profile.php?id=61595073230591' );
 
 define( 'LE_HERO_SIZES', '(max-width:1200px) 100vw, 1200px' );
@@ -56,11 +56,11 @@ add_filter( 'vr_site_icon_svg_url', function () { return le_asset( 'brand/mark.s
 /* Category tiles on the home page use the newest story image of that category. */
 add_filter( 'vr_category_cover_url', function ( $url, $term_id ) {
 	if ( '' !== $url || ! $term_id ) { return $url; }
-	$cache = get_transient( 'le_cover_' . $term_id );
+	$cache = get_transient( 'le_cover2_' . $term_id );
 	if ( false !== $cache ) { return $cache; }
 	$q   = get_posts( array( 'cat' => (int) $term_id, 'numberposts' => 1, 'meta_key' => '_thumbnail_id', 'fields' => 'ids' ) );
-	$img = $q ? (string) get_the_post_thumbnail_url( $q[0], 'medium_large' ) : '';
-	set_transient( 'le_cover_' . $term_id, $img, DAY_IN_SECONDS );
+	$img = $q ? (string) get_the_post_thumbnail_url( $q[0], 'le-card' ) : '';
+	set_transient( 'le_cover2_' . $term_id, $img, DAY_IN_SECONDS );
 	return $img;
 }, 10, 2 );
 
@@ -383,3 +383,22 @@ add_filter( 'image_editor_output_format', function ( $formats ) {
 	$formats['image/jpeg'] = 'image/webp';
 	return $formats;
 } );
+
+/* ---------- Home topic tiles: load their cover photos only when scrolled into view ----------
+   The parent prints each tile's photo as an inline CSS background (style="--cover:url(...)"), which the browser
+   fetches immediately — 9 photos competing with the hero on a slow phone. Move the URL to data-cover and let a tiny
+   IntersectionObserver apply it near the viewport (tiles without JS simply stay plain, as tiles without a cover do). */
+add_action( 'template_redirect', function () {
+	if ( ! is_front_page() || is_paged() ) { return; }
+	ob_start( function ( $html ) {
+		$html = preg_replace( '#(<a class="topic-tile[^"]*" href="[^"]*") style="--cover:url\(\x27([^\x27]+)\x27\)"#', '$1 data-cover="$2"', $html );
+		$js   = "<script>(function(){var t=document.querySelectorAll('.topic-tile[data-cover]');if(!t.length)return;function s(e){e.style.setProperty('--cover',\"url('\"+e.getAttribute('data-cover')+\"')\");e.removeAttribute('data-cover');}if(!('IntersectionObserver' in window)){t.forEach(s);return;}var o=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){s(e.target);o.unobserve(e.target);}});},{rootMargin:'300px 0px'});t.forEach(function(e){o.observe(e);});})();</script>";
+		return str_replace( '</body>', $js . '</body>', $html );
+	} );
+}, 1 );
+
+/* ---------- No WordPress emoji script (phones render emoji natively; saves a request) ---------- */
+remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
+remove_action( 'wp_print_styles', 'print_emoji_styles' );
+remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
+remove_action( 'admin_print_styles', 'print_emoji_styles' );

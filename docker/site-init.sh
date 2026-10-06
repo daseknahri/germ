@@ -24,7 +24,7 @@ chown -R www-data:www-data /var/www/html/wp-content
 URL="${SITE_URL:-${SERVICE_FQDN_WORDPRESS:-http://localhost}}"
 if ! $WP core is-installed >/dev/null 2>&1; then
   log "installing WordPress at $URL"
-  $WP core install --url="$URL" --title="Lebensecht" \
+  $WP core install --url="$URL" --title="Oma Gerda" \
     --admin_user="${WP_ADMIN_USER:-redaktion}" --admin_password="${WP_ADMIN_PASSWORD:?WP_ADMIN_PASSWORD missing}" \
     --admin_email="${WP_ADMIN_EMAIL:-admin@example.com}" --skip-email
   $WP language core install de_DE --activate || log "language pack download failed (site stays English until retried)"

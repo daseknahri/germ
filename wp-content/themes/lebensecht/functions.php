@@ -1,6 +1,6 @@
 <?php
 /**
- * Lebensecht — child theme of Viral Reader for a German story site read mostly from Facebook on phones.
+ * Oma Gerda (theme slug "lebensecht") — child theme of Viral Reader for a German story site read mostly from Facebook on phones.
  *
  * Everything here is presentation: brand CSS, the end-of-story block (reader question, share, next story),
  * the sticky next-story bar, branded hero/covers and social-card fallbacks for non-article pages.
@@ -10,7 +10,8 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'LE_VERSION', '1.3.0' );
+define( 'LE_VERSION', '2.0.0' );
+define( 'LE_FB_PAGE', 'https://www.facebook.com/profile.php?id=61595073230591' );
 
 function le_asset( $rel ) {
 	return get_stylesheet_directory_uri() . '/assets/' . ltrim( $rel, '/' );
@@ -110,7 +111,9 @@ add_filter( 'the_content', function ( $content ) {
 	$out .= '<div class="le-end__actions">';
 	$out .= '<a class="le-btn le-btn--fb" href="https://www.facebook.com/sharer/sharer.php?u=' . $url . '" target="_blank" rel="noopener nofollow">' . le_icon( 'fb' ) . 'Auf Facebook teilen</a>';
 	$out .= '<a class="le-btn le-btn--wa" href="https://wa.me/?text=' . $url . '" target="_blank" rel="noopener nofollow">' . le_icon( 'wa' ) . 'Per WhatsApp senden</a>';
-	$out .= '</div></aside>';
+	$out .= '</div>';
+	$out .= '<p class="le-follow">Mehr von Oma Gerda gibt es auf <a href="' . esc_url( LE_FB_PAGE ) . '" target="_blank" rel="noopener nofollow">Facebook</a> – schau vorbei, ihr Lieben.</p>';
+	$out .= '</aside>';
 
 	$next = le_next_story( $id );
 	if ( $next ) {
@@ -159,7 +162,7 @@ add_action( 'wp_head', function () {
 	if ( is_singular( 'post' ) ) { return; }
 	$title = is_front_page() ? get_bloginfo( 'name' ) . ' – ' . get_bloginfo( 'description' ) : wp_get_document_title();
 	$desc  = is_category() ? wp_strip_all_tags( category_description() ) : '';
-	if ( '' === $desc ) { $desc = 'Bewegende Geschichten aus dem echten Leben: Familie, Liebe, kleine Rache und große Herzensmomente.'; }
+	if ( '' === $desc ) { $desc = 'Oma Gerda erzählt: Geschichten, Tipps und Erinnerungen – Herzensweisheiten mit einem Augenzwinkern.'; }
 	$url = is_front_page() ? home_url( '/' ) : ( is_category() ? get_category_link( get_queried_object_id() ) : get_permalink() );
 	echo '<meta property="og:type" content="website">' . "\n";
 	echo '<meta property="og:site_name" content="' . esc_attr( get_bloginfo( 'name' ) ) . '">' . "\n";
@@ -169,6 +172,7 @@ add_action( 'wp_head', function () {
 	echo '<meta property="og:image" content="' . esc_url( le_asset( 'brand/og.jpg' ) ) . '">' . "\n";
 	echo '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">' . "\n";
 	echo '<meta name="twitter:card" content="summary_large_image">' . "\n";
+	echo '<meta name="theme-color" content="#5B3A70">' . "\n";
 	if ( is_front_page() || is_category() ) { echo '<meta name="description" content="' . esc_attr( $desc ) . '">' . "\n"; }
 }, 5 );
 
@@ -250,3 +254,33 @@ add_action( 'wp_footer', function () {
 	echo "<script>var _Hasync=_Hasync||[];_Hasync.push(['Histats.start','1," . esc_js( $id ) . ",4,0,0,0,00010000']);_Hasync.push(['Histats.fasi','1']);_Hasync.push(['Histats.track_hits','']);addEventListener('load',function(){setTimeout(function(){var hs=document.createElement('script');hs.async=true;hs.src='//s10.histats.com/js15_as.js';(document.head||document.body).appendChild(hs);},1200);});</script>"
 		. '<noscript><img src="//sstatic1.histats.com/0.gif?' . esc_attr( $id ) . '&amp;101" alt="" width="1" height="1" style="position:absolute;left:-9999px"></noscript>' . "\n";
 }, 50 );
+
+/* ---------- Organization schema: Facebook page as sameAs ----------
+   The plugin's JSON-LD graph has a minimal Organization (@id home#organization) without sameAs. Emitting the same
+   @id here MERGES with it for crawlers, adding the logo + the Facebook page. Front end only, tiny. */
+add_action( 'wp_head', function () {
+	if ( is_admin() || is_feed() ) { return; }
+	$home = home_url( '/' );
+	$org  = array(
+		'@context' => 'https://schema.org',
+		'@type'    => 'Organization',
+		'@id'      => $home . '#organization',
+		'name'     => get_bloginfo( 'name' ),
+		'url'      => $home,
+		'logo'     => array( '@type' => 'ImageObject', 'url' => le_asset( 'brand/omagerda-icon-512.png' ), 'width' => 512, 'height' => 512 ),
+		'sameAs'   => array( LE_FB_PAGE ),
+	);
+	echo '<script type="application/ld+json">' . wp_json_encode( $org, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput -- JSON-encoded
+}, 24 );
+
+/* ---------- Home intro (brand voice) ----------
+   One compact, server-rendered strip on the first home page (fixed-size portrait: no layout shift). Printed
+   from header.php, under the header ad. */
+function le_home_intro() {
+	if ( ! is_front_page() || is_paged() ) { return; }
+	echo '<section class="le-intro" aria-label="Über Oma Gerda"><div class="vr-container le-intro__in">';
+	echo '<img class="le-intro__img" src="' . esc_url( le_asset( 'brand/oma-gerda-avatar.jpg' ) ) . '" alt="Oma Gerda mit einer Tasse Kaffee" width="64" height="64" loading="lazy" decoding="async">';
+	echo '<div class="le-intro__t"><p class="le-intro__h">Oma Gerda erzählt: Geschichten, Tipps und Erinnerungen</p>';
+	echo '<p class="le-intro__s">Herzensweisheiten mit einem Augenzwinkern – komm rein, der Kaffee ist fertig. <a href="' . esc_url( LE_FB_PAGE ) . '" target="_blank" rel="noopener nofollow">Oma Gerda auf Facebook</a></p></div>';
+	echo '</div></section>';
+}

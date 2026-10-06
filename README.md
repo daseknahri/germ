@@ -1,11 +1,11 @@
-# Lebensecht — „Geschichten, die das Leben schreibt“
+# Oma Gerda — „Herzensweisheiten mit einem Augenzwinkern“ (formerly Lebensecht)
 
-German story site for a Facebook audience, served at **lebensecht.getemoji.site**.
+German story site for a Facebook audience, served at **lebensecht.getemoji.site** (URL unchanged by the rebrand).
 WordPress on Docker (Coolify), fully set up on first start — no wp-admin clicks needed.
 
 ## What's inside
 - `wp-content/themes/viral-reader` — parent theme (vendored, v1.9.34)
-- `wp-content/themes/lebensecht` — brand child theme: self-hosted Literata/Inter (no Google Fonts CDN, GDPR),
+- `wp-content/themes/lebensecht` — brand child theme (folder/slug stays `lebensecht`; brand = Oma Gerda, purple #5B3A70 / lilac #B79CDB / cream): self-hosted Literata/Inter (no Google Fonts CDN, GDPR),
   mood-coloured categories, end-of-story question + share + next story, sticky next-story bar, dark mode
 - `wp-content/plugins/automation-hamri` — publishing/SEO/ads engine (vendored, v9.42.0)
 - `data/bundles/*.zip` — 300 stories (6 × 50) with images, imported on first start

@@ -1,6 +1,6 @@
 <?php
 /**
- * Lebensecht site seed — run by docker/site-init.sh via `wp eval-file` on every start.
+ * Oma Gerda site seed (formerly Lebensecht) — run by docker/site-init.sh via `wp eval-file` on every start.
  *
  * Idempotent: the brand/site setup runs once per LE_SEED_VERSION, and each story bundle is imported once
  * (tracked in the le_imported_bundles option), so a restart mid-import simply resumes.
@@ -8,7 +8,9 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-const LE_SEED_VERSION = 3;
+const LE_SEED_VERSION = 4;   /* 4 = Oma Gerda rebrand (name, tagline, icon/logo, pages, author, social, menu) */
+const LE_SEED_FB      = 'https://www.facebook.com/profile.php?id=61595073230591';
+const LE_AUTHOR_BIO   = 'Oma Gerda teilt warme, humorvolle Alltagsweisheiten fürs Herz – übers Älterwerden, die kleinen Freuden und das, was früher war.';
 const LE_DATA         = '/opt/site/data';
 const LE_BRAND_DIR    = WP_CONTENT_DIR . '/themes/lebensecht/assets/brand';
 
@@ -42,9 +44,63 @@ function le_page( $slug, $title, $html, $status = 'publish' ) {
 	return (int) wp_insert_post( wp_slash( $data ) );
 }
 
+/* The "Oma Gerda" section (category oma-gerda + nostalgie / omas-alltag / omas-tipps) in the main navigation,
+   next to the story categories. Categories are created only when missing (the live site already has them, so
+   its ids/slugs/posts are never touched); menu items are added only when not already present. */
+function le_seed_oma_section() {
+	$tree = array(
+		'oma-gerda'   => array( 'Oma Gerda', 'Oma Gerda erzählt: Geschichten, Tipps und Erinnerungen mit einem Augenzwinkern.', '' ),
+		'nostalgie'   => array( 'Nostalgie', 'Früher war nicht alles besser – aber vieles wärmer. Erinnerungen von Oma Gerda.', 'oma-gerda' ),
+		'omas-alltag' => array( 'Omas Alltag', 'Kaffee, Katze und kleine Freuden: ein Tag bei Oma Gerda.', 'oma-gerda' ),
+		'omas-tipps'  => array( 'Omas Tipps', 'Bewährte Hausmittel, Haushaltstricks und Lebensweisheiten von Oma Gerda.', 'oma-gerda' ),
+	);
+	$ids = array();
+	foreach ( $tree as $slug => $c ) {
+		$t = get_term_by( 'slug', $slug, 'category' );
+		if ( ! $t ) {
+			$args = array( 'slug' => $slug, 'description' => $c[1] );
+			if ( '' !== $c[2] && ! empty( $ids[ $c[2] ] ) ) { $args['parent'] = $ids[ $c[2] ]; }
+			$r = wp_insert_term( $c[0], 'category', $args );
+			if ( is_wp_error( $r ) ) { le_log( 'category ' . $slug . ': ' . $r->get_error_message() ); continue; }
+			$ids[ $slug ] = (int) $r['term_id'];
+		} else {
+			$ids[ $slug ] = (int) $t->term_id;
+		}
+	}
+	if ( empty( $ids['oma-gerda'] ) ) { return; }
+
+	$locs = get_theme_mod( 'nav_menu_locations', array() );
+	$mid  = 0;
+	foreach ( $locs as $loc => $id ) { if ( false !== strpos( $loc, 'primary' ) && $id ) { $mid = (int) $id; break; } }
+	if ( ! $mid ) { $menu = wp_get_nav_menu_object( 'Hauptmenü' ); $mid = $menu ? (int) $menu->term_id : 0; }
+	if ( ! $mid ) { return; }
+
+	$have = array();
+	foreach ( (array) wp_get_nav_menu_items( $mid ) as $it ) { if ( 'category' === $it->object ) { $have[ (int) $it->object_id ] = (int) $it->ID; } }
+	$parent_item = $have[ $ids['oma-gerda'] ] ?? 0;
+	if ( ! $parent_item ) {
+		$parent_item = (int) wp_update_nav_menu_item( $mid, 0, array( 'menu-item-object' => 'category', 'menu-item-object-id' => $ids['oma-gerda'], 'menu-item-type' => 'taxonomy', 'menu-item-status' => 'publish' ) );
+	}
+	foreach ( array( 'nostalgie', 'omas-alltag', 'omas-tipps' ) as $slug ) {
+		if ( empty( $ids[ $slug ] ) || isset( $have[ $ids[ $slug ] ] ) ) { continue; }
+		wp_update_nav_menu_item( $mid, 0, array( 'menu-item-object' => 'category', 'menu-item-object-id' => $ids[ $slug ], 'menu-item-type' => 'taxonomy', 'menu-item-parent-id' => $parent_item, 'menu-item-status' => 'publish' ) );
+	}
+	delete_transient( 'le_cover_' . $ids['oma-gerda'] );
+}
+
+/* Oma Gerda is the site's author: display name, bio, portrait and Facebook page (feeds byline, author box and the
+   Person schema). The login name / author URL slug stay as they are, so no URL changes. */
+function le_seed_author() {
+	$uid = le_admin_id();
+	wp_update_user( array( 'ID' => $uid, 'display_name' => 'Oma Gerda', 'nickname' => 'Oma Gerda', 'description' => LE_AUTHOR_BIO ) );
+	$avatar = le_brand_media( 'oma-gerda-avatar.jpg', 'Oma Gerda Portrait' );
+	if ( $avatar ) { update_user_meta( $uid, 'vr_author_avatar', $avatar ); }
+	update_user_meta( $uid, 'vr_social_facebook', LE_SEED_FB );
+}
+
 function le_seed_site() {
-	update_option( 'blogname', 'Lebensecht' );
-	update_option( 'blogdescription', 'Geschichten, die das Leben schreibt' );
+	update_option( 'blogname', 'Oma Gerda' );
+	update_option( 'blogdescription', 'Herzensweisheiten mit einem Augenzwinkern' );
 	update_option( 'timezone_string', 'Europe/Berlin' );
 	update_option( 'date_format', 'j. F Y' );
 	update_option( 'time_format', 'H:i' );
@@ -55,13 +111,14 @@ function le_seed_site() {
 	update_option( 'blog_public', 1 );
 	update_option( 'permalink_structure', '/%postname%/' );
 
-	/* Theme options: no single author byline (many narrators), story wording. */
-	set_theme_mod( 'vr_byline_author', false );
+	/* Theme options: Oma Gerda is the one voice of the site, so the byline + author box show her. */
+	set_theme_mod( 'vr_byline_author', true );
 	set_theme_mod( 'vr_noun', 'story' );
+	set_theme_mod( 'vr_brand_social_facebook', LE_SEED_FB );   /* footer icon row */
 
-	$icon = le_brand_media( 'site-icon-512.png', 'Lebensecht Icon' );
+	$icon = le_brand_media( 'omagerda-icon-512.png', 'Oma Gerda Icon' );
 	if ( $icon ) { update_option( 'site_icon', $icon ); }
-	$logo = le_brand_media( 'logo.png', 'Lebensecht Logo' );
+	$logo = le_brand_media( 'omagerda-logo.png', 'Oma Gerda Logo' );
 	if ( $logo ) { set_theme_mod( 'custom_logo', $logo ); update_option( 'site_logo', $logo ); }
 
 	/* WordPress sample content. */
@@ -89,11 +146,11 @@ function le_seed_site() {
 	/* Pages */
 	$site = home_url( '/' );
 	le_page( 'ueber-uns', 'Über uns',
-		'<p><strong>Lebensecht</strong> sammelt Geschichten, die das Leben schreibt: über Familie und Liebe, über Menschen, die zu weit gehen, und über die kleinen Gesten, die alles verändern.</p>'
-		. '<p>Wir lesen jede Geschichte, bevor sie erscheint, kürzen sie behutsam und achten darauf, dass sie gut zu lesen ist – am liebsten mit einer Tasse Kaffee am Abend.</p>'
+		'<p><strong>Oma Gerda erzählt:</strong> Geschichten, Tipps und Erinnerungen. Hier gibt es Herzensweisheiten mit einem Augenzwinkern – übers Älterwerden, die kleinen Freuden, das Früher und alles, was das Leben so schreibt: Familie, Liebe und die kleinen Gesten, die alles verändern.</p>'
+		. '<p>Komm rein, Schuhe aus, der Kaffee ist fertig. Wir lesen jede Geschichte, bevor sie erscheint, kürzen sie behutsam und achten darauf, dass sie gut zu lesen ist – am liebsten mit einer Tasse Kaffee am Abend.</p>'
 		. '<p>Namen, Orte und Details werden in allen Geschichten verändert oder frei gestaltet. Ähnlichkeiten mit realen Personen sind zufällig.</p>' );
 	le_page( 'kontakt', 'Kontakt',
-		'<p>Du hast eine Frage, einen Hinweis oder möchtest uns etwas mitteilen? Schreib uns über die Facebook-Seite von Lebensecht – wir lesen jede Nachricht.</p>' );
+		'<p>Du hast eine Frage, einen Hinweis oder möchtest uns etwas mitteilen? Schreib uns über die <a href="' . LE_SEED_FB . '" rel="noopener nofollow">Facebook-Seite von Oma Gerda</a> – wir lesen jede Nachricht.</p>' );
 	$privacy = le_page( 'datenschutz', 'Datenschutzerklärung',
 		'<h2>1. Verantwortlicher</h2><p>Die Kontaktdaten des Verantwortlichen findest du im Impressum.</p>'
 		. '<h2>2. Hosting und Server-Logfiles</h2><p>Beim Aufruf dieser Website werden technisch notwendige Daten (z. B. IP-Adresse, Datum und Uhrzeit, aufgerufene Seite, Browser) in Server-Logfiles verarbeitet, um den sicheren Betrieb zu gewährleisten (Art. 6 Abs. 1 lit. f DSGVO).</p>'
@@ -114,7 +171,7 @@ function le_seed_site() {
 		. '<h2>Verbraucherstreitbeilegung</h2><p>Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>',
 		'publish' );
 	le_page( 'hinweis', 'Hinweis zu unseren Geschichten',
-		'<p>Die Geschichten auf Lebensecht sind von Erlebnissen aus dem Alltag inspiriert und werden redaktionell bearbeitet. Namen, Orte und Details sind verändert oder frei gestaltet. Ähnlichkeiten mit realen Personen oder Ereignissen sind zufällig.</p>' );
+		'<p>Die Geschichten auf Oma Gerda sind von Erlebnissen aus dem Alltag inspiriert und werden redaktionell bearbeitet. Namen, Orte und Details sind verändert oder frei gestaltet. Ähnlichkeiten mit realen Personen oder Ereignissen sind zufällig.</p>' );
 
 	/* Primary menu: the four moods. */
 	$menu = wp_get_nav_menu_object( 'Hauptmenü' );
@@ -134,6 +191,9 @@ function le_seed_site() {
 	$sw = (array) get_option( 'sidebars_widgets', array() );
 	foreach ( $sw as $k => $v ) { if ( is_array( $v ) && 'wp_inactive_widgets' !== $k ) { $sw[ $k ] = array(); } }
 	update_option( 'sidebars_widgets', $sw );
+
+	le_seed_oma_section();
+	le_seed_author();
 
 	flush_rewrite_rules( false );
 	update_option( 'le_seed_version', LE_SEED_VERSION );

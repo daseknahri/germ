@@ -37,3 +37,11 @@ $WP plugin is-installed google-site-kit || $WP plugin install google-site-kit ||
 $WP plugin is-installed google-site-kit && $WP plugin activate google-site-kit
 $WP eval-file /opt/site/seed/seed.php && log "seed done"
 chown -R www-data:www-data /var/www/html/wp-content/uploads 2>/dev/null || true
+
+# One-time image refresh (theme 2.0.3): generate the missing 480px "le-card" sub-size (as WebP) for stories imported
+# before it existed. Idempotent via an option flag (set only after a clean finish), runs in the background so it never
+# delays Apache, and --only-missing never touches or deletes existing files.
+if [ "$($WP option get le_card_sizes_v1 2>/dev/null)" != "1" ]; then
+  ( $WP media regenerate --only-missing --yes >/dev/null 2>&1 && $WP option update le_card_sizes_v1 1 >/dev/null 2>&1 \
+      && chown -R www-data:www-data /var/www/html/wp-content/uploads && log "card image sizes generated" ) &
+fi

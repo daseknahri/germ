@@ -10,8 +10,10 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'LE_VERSION', '2.0.2' );
+define( 'LE_VERSION', '2.0.3' );
 define( 'LE_FB_PAGE', 'https://www.facebook.com/profile.php?id=61595073230591' );
+
+define( 'LE_HERO_SIZES', '(max-width:1200px) 100vw, 1200px' );
 
 function le_asset( $rel ) {
 	return get_stylesheet_directory_uri() . '/assets/' . ltrim( $rel, '/' );
@@ -46,7 +48,8 @@ add_filter( 'vr_hero_image_url', function () { return le_asset( 'brand/hero-1280
 add_action( 'wp_head', function () {
 	if ( ! is_front_page() || is_paged() ) { return; }
 	remove_action( 'wp_head', 'vr_preload_lcp', 1 );
-	printf( '<link rel="preload" as="image" href="%s" type="image/webp" fetchpriority="high">' . "\n", esc_url( le_asset( 'brand/hero-1280.webp' ) ) );
+	/* Phones fetch the 640w file (13 KB) instead of the 1280w one (32 KB): same srcset/sizes as the <img> below. */
+	printf( '<link rel="preload" as="image" href="%s" imagesrcset="%s" imagesizes="%s" type="image/webp" fetchpriority="high">' . "\n", esc_url( le_asset( 'brand/hero-1280.webp' ) ), esc_attr( le_hero_srcset() ), esc_attr( LE_HERO_SIZES ) );
 }, 0 );
 add_filter( 'vr_site_icon_svg_url', function () { return le_asset( 'brand/mark.svg' ); } );
 
@@ -279,7 +282,7 @@ add_action( 'wp_head', function () {
 function le_home_intro() {
 	if ( ! is_front_page() || is_paged() ) { return; }
 	echo '<section class="le-intro" aria-label="Über Oma Gerda"><div class="vr-container le-intro__in">';
-	echo '<img class="le-intro__img" src="' . esc_url( le_asset( 'brand/oma-gerda-avatar.jpg' ) ) . '" alt="Oma Gerda mit einer Tasse Kaffee" width="64" height="64" loading="lazy" decoding="async">';
+	echo '<img class="le-intro__img" src="' . esc_url( le_asset( 'brand/oma-gerda-avatar.webp' ) ) . '" alt="Oma Gerda mit einer Tasse Kaffee" width="64" height="64" loading="lazy" decoding="async">';
 	echo '<div class="le-intro__t"><p class="le-intro__h">Oma Gerda erzählt: Geschichten, Tipps und Erinnerungen</p>';
 	echo '<p class="le-intro__s">Herzensweisheiten mit einem Augenzwinkern – komm rein, der Kaffee ist fertig. <a href="' . esc_url( LE_FB_PAGE ) . '" target="_blank" rel="noopener nofollow">Oma Gerda auf Facebook</a></p></div>';
 	echo '</div></section>';
@@ -303,11 +306,80 @@ add_filter( 'theme_mod_vr_byline_author', function ( $value ) {
 /* ---------- AdSense ad-blocking recovery (Google Funding Choices) ----------
    Germany has one of Europe's highest ad-blocker rates. This is Google's standard recovery tag: when an
    "Ad blocking recovery" message is published in AdSense (Privacy & messaging), visitors with a blocker are
-   asked to allow ads; without a published message the tag does nothing. Loads async, no layout impact. */
+   asked to allow ads; without a published message the tag does nothing. Injected after the window load event (speed), no layout impact. */
 add_action( 'wp_head', function () {
 	$client = le_ad_client();
 	if ( '' === $client || is_admin() ) { return; }
 	$pub = str_replace( 'ca-', '', $client );
-	echo '<script async src="https://fundingchoicesmessages.google.com/i/' . esc_attr( $pub ) . '?ers=1"></script>' . "\n";
+	/* The funding-choices script itself is injected after load (+2.5 s); only the tiny presence signal stays in <head>. */
+	echo '<script>addEventListener("load",function(){setTimeout(function(){var s=document.createElement("script");s.async=true;s.src="https://fundingchoicesmessages.google.com/i/' . esc_js( $pub ) . '?ers=1";document.head.appendChild(s);},2500);});</script>' . "\n";
 	echo "<script>(function(){function signalGooglefcPresent(){if(!window.frames['googlefcPresent']){if(document.body){var f=document.createElement('iframe');f.style='width:0;height:0;border:none;z-index:-1000;left:-1000px;top:-1000px;';f.style.display='none';f.name='googlefcPresent';document.body.appendChild(f);}else{setTimeout(signalGooglefcPresent,0);}}}signalGooglefcPresent();})();</script>\n";
 }, 3 );
+
+/* ================= Speed layer (theme 2.0.3) ================= */
+
+/* ---------- Hero: srcset ----------
+   The parent prints the standing hero as a plain <img src=…hero-1280.webp>. Give it a srcset (640/768/960/1280) and
+   sizes through a tiny output-buffer swap on the first home page; width/height keep the 16:9 box so nothing shifts. */
+function le_hero_srcset() {
+	return le_asset( 'brand/hero-640.webp' ) . ' 640w, ' . le_asset( 'brand/hero-768.webp' ) . ' 768w, ' . le_asset( 'brand/hero-960.webp' ) . ' 960w, ' . le_asset( 'brand/hero-1280.webp' ) . ' 1280w';
+}
+add_action( 'template_redirect', function () {
+	if ( ! is_front_page() || is_paged() ) { return; }
+	ob_start( function ( $html ) {
+		$needle = 'src="' . esc_url( le_asset( 'brand/hero-1280.webp' ) ) . '"';
+		if ( false === strpos( $html, $needle ) ) { return $html; }
+		return preg_replace(
+			'#<img class="home-hero__img"( src="' . preg_quote( esc_url( le_asset( 'brand/hero-1280.webp' ) ), '#' ) . '")#',
+			'<img class="home-hero__img" width="1280" height="720" srcset="' . esc_attr( le_hero_srcset() ) . '" sizes="' . esc_attr( LE_HERO_SIZES ) . '"$1',
+			$html,
+			1
+		);
+	} );
+}, 0 );
+
+/* ---------- Hardening CSS: inline, not a blocking <link> ----------
+   The parent loads hardening.css as a render-blocking stylesheet (a whole extra round trip before first paint).
+   It is small, so append it to the already-inlined parent CSS (after the brand layer: same cascade order as the
+   old <link>, which also came last). */
+add_action( 'wp_enqueue_scripts', function () {
+	if ( ! wp_style_is( 'viral-reader-hardening', 'enqueued' ) ) { return; }
+	$file = get_template_directory() . '/assets/css/hardening.css';
+	if ( ! is_readable( $file ) ) { return; }
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bundled theme file.
+	$css = (string) file_get_contents( $file );
+	$css = preg_replace( '#/\*.*?\*/#s', '', $css );
+	$css = trim( preg_replace( '/\s+/', ' ', $css ) );
+	if ( '' === $css || strlen( $css ) > 40000 ) { return; }   /* fall back to the normal <link> */
+	wp_add_inline_style( 'viral-reader', $css );
+	wp_dequeue_style( 'viral-reader-hardening' );
+}, 12 );
+
+/* ---------- Logo: WebP, and the light-on-dark variant only in dark mode ----------
+   The seed stores the PNG logo as the custom logo; serve the WebP twin from the theme instead (13 KB vs 35 KB).
+   A <picture> with a prefers-color-scheme:dark source means exactly one logo file is fetched per visitor. */
+add_filter( 'get_custom_logo', function ( $html ) {
+	$img = '<img width="417" height="96" src="' . esc_url( le_asset( 'brand/omagerda-logo.webp' ) ) . '" class="custom-logo" alt="' . esc_attr( get_bloginfo( 'name' ) ) . '" decoding="async" />';
+	$pic = '<picture><source media="(prefers-color-scheme:dark)" srcset="' . esc_url( le_asset( 'brand/logo-light.webp' ) ) . '">' . $img . '</picture>';
+	/* Replace only the <img> (core would keep a PNG srcset the browser prefers over our src). */
+	return preg_replace( '#<img\b[^>]*>#', $pic, $html, 1 );
+} );
+
+/* ---------- Story card thumbnails ----------
+   A 480px size for list cards (the grid is ~280-380px wide), chosen instead of medium_large (768), with `sizes`
+   so the browser picks the smallest candidate that is sharp. New uploads get WebP sub-sizes (the original keeps
+   its format; only generated sizes change). */
+add_action( 'after_setup_theme', function () {
+	add_image_size( 'le-card', 480, 9999, false );
+}, 20 );
+add_filter( 'post_thumbnail_size', function ( $size ) {
+	return ( 'medium_large' === $size && ! is_singular() && ! is_admin() ) ? 'le-card' : $size;
+} );
+add_filter( 'wp_get_attachment_image_attributes', function ( $attr, $att, $size ) {
+	if ( 'le-card' === $size ) { $attr['sizes'] = '(max-width:640px) calc(100vw - 32px), 380px'; }
+	return $attr;
+}, 10, 3 );
+add_filter( 'image_editor_output_format', function ( $formats ) {
+	$formats['image/jpeg'] = 'image/webp';
+	return $formats;
+} );

@@ -185,3 +185,7 @@ body{font-family:var(--serif)}
 .le-follow a{color:var(--olive);font-weight:600}
 .le-end__mark{border-radius:50%}
 .author-box__avatar,.entry-byline__avatar{border-radius:50%;object-fit:cover}
+
+/* Ad label in German (the parent theme falls back to English when its translations are not loaded). */
+:root{--vr-ad-label:"Anzeige"}
+.wpap-ad:not(:has(.wpap-ad-label))::before{content:"Anzeige"}

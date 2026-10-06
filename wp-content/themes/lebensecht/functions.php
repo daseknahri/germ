@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'LE_VERSION', '2.0.1' );
+define( 'LE_VERSION', '2.0.2' );
 define( 'LE_FB_PAGE', 'https://www.facebook.com/profile.php?id=61595073230591' );
 
 function le_asset( $rel ) {
@@ -299,3 +299,15 @@ add_filter( 'theme_mod_vr_byline_author', function ( $value ) {
 	if ( is_admin() || ! is_singular( 'post' ) ) { return $value; }
 	return le_is_oma_gerda_post() ? $value : false;
 } );
+
+/* ---------- AdSense ad-blocking recovery (Google Funding Choices) ----------
+   Germany has one of Europe's highest ad-blocker rates. This is Google's standard recovery tag: when an
+   "Ad blocking recovery" message is published in AdSense (Privacy & messaging), visitors with a blocker are
+   asked to allow ads; without a published message the tag does nothing. Loads async, no layout impact. */
+add_action( 'wp_head', function () {
+	$client = le_ad_client();
+	if ( '' === $client || is_admin() ) { return; }
+	$pub = str_replace( 'ca-', '', $client );
+	echo '<script async src="https://fundingchoicesmessages.google.com/i/' . esc_attr( $pub ) . '?ers=1"></script>' . "\n";
+	echo "<script>(function(){function signalGooglefcPresent(){if(!window.frames['googlefcPresent']){if(document.body){var f=document.createElement('iframe');f.style='width:0;height:0;border:none;z-index:-1000;left:-1000px;top:-1000px;';f.style.display='none';f.name='googlefcPresent';document.body.appendChild(f);}else{setTimeout(signalGooglefcPresent,0);}}}signalGooglefcPresent();})();</script>\n";
+}, 3 );

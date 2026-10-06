@@ -3,6 +3,38 @@
 Newest-first. build-v9 is the modular (`includes/*.php`), full-featured product that keeps its
 front-end (SEO/ads/recipe). See `readme.txt` for the WordPress-directory changelog.
 
+## 9.44.0
+
+**Instagram auto-poster + Pinterest pins, ported from build-final 8.87 / 8.82.** Both opt-in and OFF by default; nothing
+reaches the front end unless the Pinterest feed is ticked (the feed is a separate OFF toggle).
+
+### Added
+- `includes/instagram.php`: posts each new post's image to the Instagram account linked to the Facebook Page. Rides on the
+  9.43 Facebook poster (same Page token, schedule, backlog and 15-min tick; own queue `_wpap_igp_done`, option
+  `wpap_igpage`). Caption = Facebook hook (`_wpap_fb_hook`) + description + "link in bio" + hashtags from tags/keywords.
+  Image = pin image, else the Facebook card image, else the featured image, made a 1080-wide JPEG.
+- `includes/pinterest.php`: per-post pin data, bulk-upload CSV (Title, Media URL, Pinterest board, Thumbnail,
+  Description, Link, Publish date, Keywords; "Next 200 not yet exported", N/day schedule), category -> board map, UTM link
+  tagging, optional RSS feed `/feed/pinterest/` (OFF by default). Option `wpap_pinterest`; export/import carries it.
+- build-v9 adaptations: pin image chain = `_wpap_pin_image` -> `_wpap_fb_image_url` -> featured -> `_wpap_image_url` ->
+  first in-content image -> default; pin description = `_wpap_pin_description` -> `_wpap_fb_hook` -> excerpt (the meta
+  description) -> content; IG caption falls back to the excerpt. Batch items may carry `pinImage` / `pinTitle` /
+  `pinDescription` (stored as `_wpap_pin_*`).
+- Guarded port of `wpap_is_usable_image_url()`. Settings panels render in the main form and save with the existing button.
+
+## 9.43.0
+
+**Facebook Page auto-poster, ported from build-final 8.86.** Opt-in (OFF by default): Settings -> "Facebook Page
+posting". Shares each new post to your Page as a photo with its Facebook hook as the caption, the link in the FIRST
+COMMENT (same text as the Distribution Hub), N/day spread across a time window, since-date queue, optional backlog,
+Graph v25.0. A pasted user token is swapped for the Page's own token; a token error pauses it, a rate limit backs off.
+
+### Added
+- `includes/facebook-page.php` + `includes/facebook-page-admin.php` (from build-final; Instagram/Pinterest hooks stay
+  `function_exists`-guarded and inert). Cron `wpap_fbp_cron` every 15 min (`wpap_15min`), cleared on deactivate.
+- Guarded ports: `wpap_apply_utm()` (reads the existing `wpap_utm` option) and `wpap_help_tip()` (hover help).
+- Settings page: panel rendered inside the main form; saved by the existing Save button.
+
 ## 9.42.0
 
 **Bulk ZIP Publish: in-article images from the zip.** Until now only the featured image came from the bundle;

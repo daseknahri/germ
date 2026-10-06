@@ -22,6 +22,7 @@ function wpap_handle_export_settings() {
             'wpap_ads_txt'      => (string) get_option( 'wpap_ads_txt', '' ),
             'wpap_automation'   => get_option( 'wpap_automation', array() ),
             'wpap_utm'          => get_option( 'wpap_utm', array() ),
+            'wpap_pinterest'    => get_option( 'wpap_pinterest', array() ),   /* 9.44.0 (no secrets) */
         ),
         /* Secrets (API keys in wpap_settings, license) are intentionally omitted. */
     );
@@ -102,6 +103,11 @@ function wpap_handle_import_settings() {
             'campaign' => sanitize_text_field( (string) ( $u['campaign'] ?? '{slug}' ) ),
             'groups'   => sanitize_textarea_field( (string) ( $u['groups'] ?? '' ) ),
         ), false );
+    }
+
+    if ( isset( $opts['wpap_pinterest'] ) && is_array( $opts['wpap_pinterest'] ) && function_exists( 'wpap_pin_sanitize' ) ) {
+        update_option( 'wpap_pinterest', wpap_pin_sanitize( $opts['wpap_pinterest'] ), false );
+        update_option( 'wpap_pin_flush_rules', 1, false );
     }
 
     wp_safe_redirect( add_query_arg( 'wpap_imported', '1', $redirect ) );

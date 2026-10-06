@@ -10,8 +10,9 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'LE_VERSION', '2.0.5' );
+define( 'LE_VERSION', '2.0.6' );
 define( 'LE_FB_PAGE', 'https://www.facebook.com/profile.php?id=61595073230591' );
+define( 'LE_IG_PAGE', 'https://www.instagram.com/oma.gerda1/' );
 
 define( 'LE_HERO_SIZES', '(max-width:1200px) 100vw, 1200px' );
 
@@ -115,7 +116,7 @@ add_filter( 'the_content', function ( $content ) {
 	$out .= '<a class="le-btn le-btn--fb" href="https://www.facebook.com/sharer/sharer.php?u=' . $url . '" target="_blank" rel="noopener nofollow">' . le_icon( 'fb' ) . 'Auf Facebook teilen</a>';
 	$out .= '<a class="le-btn le-btn--wa" href="https://wa.me/?text=' . $url . '" target="_blank" rel="noopener nofollow">' . le_icon( 'wa' ) . 'Per WhatsApp senden</a>';
 	$out .= '</div>';
-	$out .= '<p class="le-follow">Mehr von Oma Gerda gibt es auf <a href="' . esc_url( LE_FB_PAGE ) . '" target="_blank" rel="noopener nofollow">Facebook</a> – schau vorbei, ihr Lieben.</p>';
+	$out .= '<p class="le-follow">Mehr von Oma Gerda gibt es auf <a href="' . esc_url( LE_FB_PAGE ) . '" target="_blank" rel="noopener nofollow">Facebook</a> und <a href="' . esc_url( LE_IG_PAGE ) . '" target="_blank" rel="noopener nofollow">Instagram</a> – schau vorbei, ihr Lieben.</p>';
 	$out .= '</aside>';
 
 	$next = le_next_story( $id );
@@ -271,7 +272,7 @@ add_action( 'wp_head', function () {
 		'name'     => get_bloginfo( 'name' ),
 		'url'      => $home,
 		'logo'     => array( '@type' => 'ImageObject', 'url' => le_asset( 'brand/omagerda-icon-512.png' ), 'width' => 512, 'height' => 512 ),
-		'sameAs'   => array( LE_FB_PAGE ),
+		'sameAs'   => array( LE_FB_PAGE, LE_IG_PAGE ),
 	);
 	echo '<script type="application/ld+json">' . wp_json_encode( $org, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput -- JSON-encoded
 }, 24 );
@@ -284,7 +285,7 @@ function le_home_intro() {
 	echo '<section class="le-intro" aria-label="Über Oma Gerda"><div class="vr-container le-intro__in">';
 	echo '<img class="le-intro__img" src="' . esc_url( le_asset( 'brand/oma-gerda-avatar.webp' ) ) . '" alt="Oma Gerda mit einer Tasse Kaffee" width="64" height="64" loading="lazy" decoding="async">';
 	echo '<div class="le-intro__t"><p class="le-intro__h">Oma Gerda erzählt: Geschichten, Tipps und Erinnerungen</p>';
-	echo '<p class="le-intro__s">Herzensweisheiten mit einem Augenzwinkern – komm rein, der Kaffee ist fertig. <a href="' . esc_url( LE_FB_PAGE ) . '" target="_blank" rel="noopener nofollow">Oma Gerda auf Facebook</a></p></div>';
+	echo '<p class="le-intro__s">Herzensweisheiten mit einem Augenzwinkern – komm rein, der Kaffee ist fertig. <a href="' . esc_url( LE_FB_PAGE ) . '" target="_blank" rel="noopener nofollow">Facebook</a> · <a href="' . esc_url( LE_IG_PAGE ) . '" target="_blank" rel="noopener nofollow">Instagram</a></p></div>';
 	echo '</div></section>';
 }
 

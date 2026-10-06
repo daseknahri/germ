@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 const LE_SEED_VERSION = 4;   /* 4 = Oma Gerda rebrand (name, tagline, icon/logo, pages, author, social, menu) */
 const LE_SEED_FB      = 'https://www.facebook.com/profile.php?id=61595073230591';
+const LE_SEED_IG      = 'https://www.instagram.com/oma.gerda1/';
 const LE_AUTHOR_BIO   = 'Oma Gerda teilt warme, humorvolle Alltagsweisheiten fürs Herz – übers Älterwerden, die kleinen Freuden und das, was früher war.';
 const LE_DATA         = '/opt/site/data';
 const LE_BRAND_DIR    = WP_CONTENT_DIR . '/themes/lebensecht/assets/brand';
@@ -96,6 +97,7 @@ function le_seed_author() {
 	$avatar = le_brand_media( 'oma-gerda-avatar.jpg', 'Oma Gerda Portrait' );
 	if ( $avatar ) { update_user_meta( $uid, 'vr_author_avatar', $avatar ); }
 	update_user_meta( $uid, 'vr_social_facebook', LE_SEED_FB );
+	update_user_meta( $uid, 'vr_social_instagram', LE_SEED_IG );
 }
 
 function le_seed_site() {
@@ -115,6 +117,7 @@ function le_seed_site() {
 	set_theme_mod( 'vr_byline_author', true );
 	set_theme_mod( 'vr_noun', 'story' );
 	set_theme_mod( 'vr_brand_social_facebook', LE_SEED_FB );   /* footer icon row */
+	set_theme_mod( 'vr_brand_social_instagram', LE_SEED_IG );
 
 	$icon = le_brand_media( 'omagerda-icon-512.png', 'Oma Gerda Icon' );
 	if ( $icon ) { update_option( 'site_icon', $icon ); }
@@ -150,7 +153,7 @@ function le_seed_site() {
 		. '<p>Komm rein, Schuhe aus, der Kaffee ist fertig. Wir lesen jede Geschichte, bevor sie erscheint, kürzen sie behutsam und achten darauf, dass sie gut zu lesen ist – am liebsten mit einer Tasse Kaffee am Abend.</p>'
 		. '<p>Namen, Orte und Details werden in allen Geschichten verändert oder frei gestaltet. Ähnlichkeiten mit realen Personen sind zufällig.</p>' );
 	le_page( 'kontakt', 'Kontakt',
-		'<p>Du hast eine Frage, einen Hinweis oder möchtest uns etwas mitteilen? Schreib uns über die <a href="' . LE_SEED_FB . '" rel="noopener nofollow">Facebook-Seite von Oma Gerda</a> – wir lesen jede Nachricht.</p>' );
+		'<p>Du hast eine Frage, einen Hinweis oder möchtest uns etwas mitteilen? Schreib uns über die <a href="' . LE_SEED_FB . '" rel="noopener nofollow">Facebook-Seite von Oma Gerda</a> oder auf <a href="' . LE_SEED_IG . '" rel="noopener nofollow">Instagram</a> – wir lesen jede Nachricht.</p>' );
 	$privacy = le_page( 'datenschutz', 'Datenschutzerklärung',
 		'<h2>1. Verantwortlicher</h2><p>Die Kontaktdaten des Verantwortlichen findest du im Impressum.</p>'
 		. '<h2>2. Hosting und Server-Logfiles</h2><p>Beim Aufruf dieser Website werden technisch notwendige Daten (z. B. IP-Adresse, Datum und Uhrzeit, aufgerufene Seite, Browser) in Server-Logfiles verarbeitet, um den sicheren Betrieb zu gewährleisten (Art. 6 Abs. 1 lit. f DSGVO).</p>'

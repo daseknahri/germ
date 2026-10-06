@@ -574,6 +574,13 @@ function wpap_publish_article( array $item, array $opts = array() ) {
     }
     /* Per-article first-comment template (renders {{link}} in the export / "FB post"). */
     if ( $fb_comment_is_tpl ) { update_post_meta( $post_id, '_wpap_fb_comment', $fb_comment_tpl ); }
+    /* 9.44.0: optional Pinterest overrides from the batch contract (pinImage / pinTitle / pinDescription). Without them
+       a pin falls back to the Facebook card / featured image, the post title and the hook / excerpt. */
+    $pin_img = ( isset( $item['pinImage'] ) && is_scalar( $item['pinImage'] ) ) ? esc_url_raw( trim( (string) $item['pinImage'] ) ) : '';
+    if ( '' !== $pin_img && function_exists( 'wpap_is_usable_image_url' ) && wpap_is_usable_image_url( $pin_img ) ) { update_post_meta( $post_id, '_wpap_pin_image', $pin_img ); }
+    foreach ( array( 'pinTitle' => '_wpap_pin_title', 'pinDescription' => '_wpap_pin_description' ) as $pin_k => $pin_mk ) {
+        if ( isset( $item[ $pin_k ] ) && is_scalar( $item[ $pin_k ] ) && '' !== trim( (string) $item[ $pin_k ] ) ) { update_post_meta( $post_id, $pin_mk, sanitize_textarea_field( (string) $item[ $pin_k ] ) ); }
+    }
     /* _wpap_source_key is written via wp_insert_post( meta_input ) above — early and
        atomic, so a throw in the category/image/SEO steps can't orphan the dedup key. */
 

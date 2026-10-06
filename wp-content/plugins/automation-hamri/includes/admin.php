@@ -45,6 +45,11 @@ function wpap_render_settings() {
         }
         update_option( 'wpap_settings', $saved, false );   /* autoload = no: keep secrets out of the all-options cache */
 
+        /* 9.43.0: Facebook Page auto-poster settings (same nonce + capability guard). */
+        if ( function_exists( 'wpap_fbp_save_from_post' ) ) { wpap_fbp_save_from_post(); }
+        if ( function_exists( 'wpap_igp_save_from_post' ) ) { wpap_igp_save_from_post(); }   /* 9.44.0 (after the Facebook settings: it re-evaluates the shared cron) */
+        if ( function_exists( 'wpap_pin_save_from_post' ) ) { wpap_pin_save_from_post(); }
+
         /* ── Automation (Google Sheet) settings — same nonce/cap guard ── */
         update_option( 'wpap_automation', array(
             'enabled'          => isset( $_POST['wpap_auto_enabled'] ) ? 1 : 0,
@@ -809,6 +814,10 @@ function wpap_render_settings() {
                 </tr>
                 <?php endif; ?>
             </table>
+
+            <?php if ( function_exists( 'wpap_fbp_render_settings' ) ) { wpap_fbp_render_settings(); } /* 9.43.0 */ ?>
+            <?php if ( function_exists( 'wpap_igp_render_settings' ) ) { wpap_igp_render_settings(); } /* 9.44.0 */ ?>
+            <?php if ( function_exists( 'wpap_pin_render_settings' ) ) { wpap_pin_render_settings(); } /* 9.44.0 */ ?>
 
             <?php submit_button( 'Save Settings', 'primary', 'wpap_save' ); ?>
         </form>

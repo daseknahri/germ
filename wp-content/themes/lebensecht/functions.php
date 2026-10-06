@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'LE_VERSION', '2.0.4' );
+define( 'LE_VERSION', '2.0.5' );
 define( 'LE_FB_PAGE', 'https://www.facebook.com/profile.php?id=61595073230591' );
 
 define( 'LE_HERO_SIZES', '(max-width:1200px) 100vw, 1200px' );
@@ -402,3 +402,25 @@ remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
 remove_action( 'wp_print_styles', 'print_emoji_styles' );
 remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
 remove_action( 'admin_print_styles', 'print_emoji_styles' );
+
+/* ---------- Story pages: lazy-load the ads further down ----------
+   Every ad unit pushed at once makes the phone download and run Google's ad code for 5 slots before the story
+   photo can paint (~30 PageSpeed points on story pages). The first two slots (top strip + first in-article ad)
+   still load immediately; the rest (repeat, end-of-story multiplex, sidebar) are pushed when they come within
+   ~600px of the screen. Unscrolled ads were never viewable anyway, so this protects Active View / RPM too. */
+define( 'LE_EAGER_ADS', 2 );
+add_action( 'template_redirect', function () {
+	if ( ! is_singular( 'post' ) ) { return; }
+	ob_start( function ( $html ) {
+		$push  = '#(<ins class="adsbygoogle")([^>]*></ins>)\s*<script>\s*\(adsbygoogle\s*=\s*window\.adsbygoogle\s*\|\|\s*\[\]\)\.push\(\{\}\);\s*</script>#';
+		$count = 0;
+		$html  = preg_replace_callback( $push, function ( $m ) use ( &$count ) {
+			$count++;
+			if ( $count <= LE_EAGER_ADS ) { return $m[0]; }
+			return $m[1] . ' data-le-lazy="1"' . $m[2];
+		}, $html );
+		if ( $count <= LE_EAGER_ADS ) { return $html; }
+		$js = "<script>(function(){var l=document.querySelectorAll('ins.adsbygoogle[data-le-lazy]');if(!l.length)return;function go(e){if(!e.hasAttribute('data-le-lazy'))return;e.removeAttribute('data-le-lazy');(window.adsbygoogle=window.adsbygoogle||[]).push({});}if(!('IntersectionObserver' in window)){l.forEach(go);return;}var o=new IntersectionObserver(function(es){es.forEach(function(x){if(x.isIntersecting){o.unobserve(x.target);go(x.target);}});},{rootMargin:'600px 0px'});l.forEach(function(e){o.observe(e);});})();</script>";
+		return str_replace( '</body>', $js . '</body>', $html );
+	} );
+}, 2 );

@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'LE_VERSION', '2.0.0' );
+define( 'LE_VERSION', '2.0.1' );
 define( 'LE_FB_PAGE', 'https://www.facebook.com/profile.php?id=61595073230591' );
 
 function le_asset( $rel ) {
@@ -284,3 +284,18 @@ function le_home_intro() {
 	echo '<p class="le-intro__s">Herzensweisheiten mit einem Augenzwinkern – komm rein, der Kaffee ist fertig. <a href="' . esc_url( LE_FB_PAGE ) . '" target="_blank" rel="noopener nofollow">Oma Gerda auf Facebook</a></p></div>';
 	echo '</div></section>';
 }
+
+/* ---------- Byline + author box only on Oma Gerda's own posts ----------
+   The site is branded Oma Gerda, but the older relationship/drama stories are told by other narrators,
+   so crediting her there reads wrong. Show the byline/author box only on single posts inside the
+   "oma-gerda" category tree (parent + Nostalgie / Omas Alltag / Omas Tipps); everywhere else it's off. */
+function le_is_oma_gerda_post( $post_id = 0 ) {
+	$parent = get_category_by_slug( 'oma-gerda' );
+	if ( ! $parent ) { return false; }
+	$tree = array_merge( array( (int) $parent->term_id ), array_map( 'intval', get_term_children( $parent->term_id, 'category' ) ) );
+	return has_category( $tree, $post_id ? $post_id : get_the_ID() );
+}
+add_filter( 'theme_mod_vr_byline_author', function ( $value ) {
+	if ( is_admin() || ! is_singular( 'post' ) ) { return $value; }
+	return le_is_oma_gerda_post() ? $value : false;
+} );

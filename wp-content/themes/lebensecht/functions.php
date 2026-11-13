@@ -253,6 +253,7 @@ add_action( 'the_post', function ( $post, $query ) {
    Disclosed in the Datenschutz page (section 5). */
 add_action( 'wp_footer', function () {
 	$id = trim( (string) getenv( 'HISTATS_ID' ) );
+	if ( '' === $id || 'off' === $id ) { $id = '5064113'; }
 	if ( 'off' === $id || is_admin() || is_user_logged_in() ) { return; }
 	$id = ctype_digit( $id ) ? $id : '5055954';
 	echo "<script>var _Hasync=_Hasync||[];_Hasync.push(['Histats.start','1," . esc_js( $id ) . ",4,0,0,0,00010000']);_Hasync.push(['Histats.fasi','1']);_Hasync.push(['Histats.track_hits','']);addEventListener('load',function(){setTimeout(function(){var hs=document.createElement('script');hs.async=true;hs.src='//s10.histats.com/js15_as.js';(document.head||document.body).appendChild(hs);},1200);});</script>"
